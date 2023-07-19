@@ -9,8 +9,6 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-
-	"github.com/tidwall/gjson"
 )
 
 // YSEClient 银盛支付Client
@@ -68,14 +66,14 @@ func (c *YSEClient) Decrypt(cipher string) (string, error) {
 }
 
 // PostForm 发送POST表单请求
-func (c *YSEClient) PostForm(ctx context.Context, api, serviceNO string, bizData M, options ...HTTPOption) (gjson.Result, error) {
+func (c *YSEClient) PostForm(ctx context.Context, api, serviceNO string, bizData X, options ...HTTPOption) (X, error) {
 	bizJSON := ""
 
 	if len(bizData) != 0 {
 		bizByte, err := json.Marshal(bizData)
 
 		if err != nil {
-			return fail(err)
+			return nil, err
 		}
 
 		bizJSON = string(bizByte)
@@ -84,7 +82,7 @@ func (c *YSEClient) PostForm(ctx context.Context, api, serviceNO string, bizData
 	commReq := NewCommonReq(c.mchNO, serviceNO, bizJSON)
 
 	if err := commReq.DoSign(c.prvKey); err != nil {
-		return fail(err)
+		return nil, err
 	}
 
 	options = append(options, WithHTTPHeader("Content-Type", "application/x-www-form-urlencoded"))
@@ -92,51 +90,67 @@ func (c *YSEClient) PostForm(ctx context.Context, api, serviceNO string, bizData
 	resp, err := c.client.Do(ctx, http.MethodPost, c.URL(api), []byte(commReq.FormURLEncode()), options...)
 
 	if err != nil {
-		return fail(err)
+		return nil, err
 	}
 
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return fail(fmt.Errorf("unexpected http status: %d", resp.StatusCode))
+		return nil, fmt.Errorf("unexpected http status: %d", resp.StatusCode)
 	}
 
 	b, err := io.ReadAll(resp.Body)
 
 	if err != nil {
-		return fail(err)
+		return nil, err
 	}
 
 	commResp := new(CommonResp)
 
 	if err = json.Unmarshal(b, commResp); err != nil {
-		return fail(err)
+		return nil, err
 	}
 
 	if err = commResp.Verify(c.pubKey); err != nil {
-		return fail(err)
+		return nil, err
 	}
 
 	if commResp.ReqID != commReq.ReqID {
-		return fail(fmt.Errorf("requestID mismatch, request: %s, response: %s", commReq.ReqID, commResp.ReqID))
+		return nil, fmt.Errorf("requestID mismatch, request: %s, response: %s", commReq.ReqID, commResp.ReqID)
 	}
 
 	if commResp.Code != CodeOK {
-		return fail(fmt.Errorf("%s | %s", commResp.Code, commResp.Msg))
+		if commResp.Code == CodeAccepting {
+			return nil, ErrAccepting
+		}
+
+		return nil, fmt.Errorf("%s | %s", commResp.Code, commResp.Msg)
 	}
 
-	return gjson.Parse(commResp.BizJSON), nil
+	var ret X
+
+	if err = json.Unmarshal([]byte(commResp.BizJSON), &ret); err != nil {
+		return nil, err
+	}
+
+	return ret, nil
 }
 
 // ParseNotify 解析异步回调通知，返回BizJSON数据
-func (c *YSEClient) ParseNotify(form url.Values) (gjson.Result, error) {
+func (c *YSEClient) ParseNotify(form url.Values) (X, error) {
 	np := NewNotifyParams(form)
 
 	if err := np.Verify(c.pubKey); err != nil {
-		return fail(err)
+		return nil, err
 	}
 
-	return gjson.Parse(np.BizJSON), nil
+	var ret X
+
+	if err := json.Unmarshal([]byte(np.BizJSON), &ret); err != nil {
+		return nil, err
+	}
+
+	return ret, nil
 }
 
 // NewYSEClient 生成银盛支付Client

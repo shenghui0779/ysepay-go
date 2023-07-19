@@ -5,23 +5,26 @@ import (
 	"crypto/tls"
 	"encoding/base64"
 	"encoding/pem"
+	"errors"
 	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/tidwall/gjson"
 	"golang.org/x/crypto/pkcs12"
 )
 
-var fail = func(err error) (gjson.Result, error) { return gjson.Result{}, err }
+// ErrAccepting 网关受理中
+var ErrAccepting = errors.New("err code SYS001")
 
-// CodeOK 网关受理成功响应码
-const CodeOK = "SYS000"
+const (
+	CodeOK        = "SYS000" // 网关受理成功响应码
+	CodeAccepting = "SYS001" // 网关受理中响应码
+)
 
-// M 类型别名
-type M map[string]string
+// X 类型别名
+type X map[string]string
 
 // CommonReq 公关请求参数
 type CommonReq struct {
