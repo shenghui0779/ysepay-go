@@ -154,6 +154,7 @@ type NotifyParams struct {
 	BizJSON   string `json:"bizResponseJson"`
 }
 
+// Verify 签名验证
 func (np *NotifyParams) Verify(key *PublicKey) error {
 	sign, err := base64.StdEncoding.DecodeString(np.Sign)
 
@@ -187,6 +188,7 @@ func (np *NotifyParams) Verify(key *PublicKey) error {
 	return key.Verify(crypto.SHA1, []byte(builder.String()), sign)
 }
 
+// NewNotifyParams 生成异步回调参数
 func NewNotifyParams(form url.Values) *NotifyParams {
 	return &NotifyParams{
 		ReqID:     form.Get("requestId"),
