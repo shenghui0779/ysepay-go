@@ -51,18 +51,23 @@ func (req *CommonReq) DoSign(key *PrivateKey) error {
 	builder.WriteString("charset=")
 	builder.WriteString(req.Charset)
 	builder.WriteString("&")
+
 	builder.WriteString("requestId=")
 	builder.WriteString(req.ReqID)
 	builder.WriteString("&")
+
 	builder.WriteString("serviceNo=")
 	builder.WriteString(req.ServiceNO)
 	builder.WriteString("&")
+
 	builder.WriteString("signType=")
 	builder.WriteString(req.SignType)
 	builder.WriteString("&")
+
 	builder.WriteString("srcMerchantNo=")
 	builder.WriteString(req.MchNO)
 	builder.WriteString("&")
+
 	builder.WriteString("version=")
 	builder.WriteString(req.Version)
 
@@ -130,18 +135,19 @@ func (resp *CommonResp) Verify(key *PublicKey) error {
 	if len(resp.BizJSON) != 0 {
 		builder.WriteString("bizResponseJson=")
 		builder.WriteString(resp.BizJSON)
-		builder.WriteString("\n")
+		builder.WriteString("&")
 	}
 
 	builder.WriteString("code=")
 	builder.WriteString(resp.Code)
-	builder.WriteString("\n")
+	builder.WriteString("&")
+
 	builder.WriteString("msg=")
 	builder.WriteString(resp.Msg)
-	builder.WriteString("\n")
+	builder.WriteString("&")
+
 	builder.WriteString("requestId=")
 	builder.WriteString(resp.ReqID)
-	builder.WriteString("\n")
 
 	return key.Verify(crypto.SHA1, []byte(builder.String()), sign)
 }
@@ -176,15 +182,19 @@ func (np *NotifyParams) Verify(key *PublicKey) error {
 	builder.WriteString("charset=")
 	builder.WriteString(np.Charset)
 	builder.WriteString("&")
+
 	builder.WriteString("requestId=")
 	builder.WriteString(np.ReqID)
 	builder.WriteString("&")
+
 	builder.WriteString("serviceNo=")
 	builder.WriteString(np.ServiceNO)
 	builder.WriteString("&")
+
 	builder.WriteString("signType=")
 	builder.WriteString(np.SignType)
 	builder.WriteString("&")
+
 	builder.WriteString("version=")
 	builder.WriteString(np.Version)
 
