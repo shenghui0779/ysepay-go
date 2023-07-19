@@ -16,7 +16,7 @@ import (
 )
 
 // ErrAccepting 网关受理中
-var ErrAccepting = errors.New("err code SYS001")
+var ErrAccepting = errors.New("SYS001 | 网关受理中")
 
 const (
 	CodeOK        = "SYS000" // 网关受理成功响应码
