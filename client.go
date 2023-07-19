@@ -68,7 +68,7 @@ func (c *YSEClient) Decrypt(cipher string) (string, error) {
 }
 
 // PostForm 发送POST表单请求
-func (c *YSEClient) PostForm(ctx context.Context, api, serviceNO string, bizData M) (gjson.Result, error) {
+func (c *YSEClient) PostForm(ctx context.Context, api, serviceNO string, bizData M, options ...HTTPOption) (gjson.Result, error) {
 	bizJSON := ""
 
 	if len(bizData) != 0 {
@@ -87,7 +87,9 @@ func (c *YSEClient) PostForm(ctx context.Context, api, serviceNO string, bizData
 		return fail(err)
 	}
 
-	resp, err := c.client.Do(ctx, http.MethodPost, c.URL(api), []byte(commReq.FormURLEncode()), WithHTTPHeader("Content-Type", "application/x-www-form-urlencoded"))
+	options = append(options, WithHTTPHeader("Content-Type", "application/x-www-form-urlencoded"))
+
+	resp, err := c.client.Do(ctx, http.MethodPost, c.URL(api), []byte(commReq.FormURLEncode()), options...)
 
 	if err != nil {
 		return fail(err)
