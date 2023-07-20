@@ -174,8 +174,8 @@ func (resp *CommonResp) Verify(reqID string, key *PublicKey) error {
 	return nil
 }
 
-// NotifyParams 异步回调通知参数
-type NotifyParams struct {
+// NotifyForm 异步回调通知表单数据
+type NotifyForm struct {
 	ReqID     string `json:"requestId"`
 	Version   string `json:"version"`
 	Charset   string `json:"charset"`
@@ -186,8 +186,8 @@ type NotifyParams struct {
 }
 
 // Verify 签名验证
-func (np *NotifyParams) Verify(key *PublicKey) error {
-	sign, err := base64.StdEncoding.DecodeString(np.Sign)
+func (nf *NotifyForm) Verify(key *PublicKey) error {
+	sign, err := base64.StdEncoding.DecodeString(nf.Sign)
 
 	if err != nil {
 		return err
@@ -195,37 +195,37 @@ func (np *NotifyParams) Verify(key *PublicKey) error {
 
 	var builder strings.Builder
 
-	if len(np.BizJSON) != 0 {
+	if len(nf.BizJSON) != 0 {
 		builder.WriteString("bizReqJson=")
-		builder.WriteString(np.BizJSON)
+		builder.WriteString(nf.BizJSON)
 		builder.WriteString("&")
 	}
 
 	builder.WriteString("charset=")
-	builder.WriteString(np.Charset)
+	builder.WriteString(nf.Charset)
 	builder.WriteString("&")
 
 	builder.WriteString("requestId=")
-	builder.WriteString(np.ReqID)
+	builder.WriteString(nf.ReqID)
 	builder.WriteString("&")
 
 	builder.WriteString("serviceNo=")
-	builder.WriteString(np.ServiceNO)
+	builder.WriteString(nf.ServiceNO)
 	builder.WriteString("&")
 
 	builder.WriteString("signType=")
-	builder.WriteString(np.SignType)
+	builder.WriteString(nf.SignType)
 	builder.WriteString("&")
 
 	builder.WriteString("version=")
-	builder.WriteString(np.Version)
+	builder.WriteString(nf.Version)
 
 	return key.Verify(crypto.SHA1, []byte(builder.String()), sign)
 }
 
-// NewNotifyParams 生成异步回调参数
-func NewNotifyParams(form url.Values) *NotifyParams {
-	return &NotifyParams{
+// NewNotifyForm 生成异步回调参数
+func NewNotifyForm(form url.Values) *NotifyForm {
+	return &NotifyForm{
 		ReqID:     form.Get("requestId"),
 		Version:   form.Get("version"),
 		Charset:   form.Get("charset"),

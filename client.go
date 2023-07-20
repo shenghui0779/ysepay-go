@@ -126,15 +126,15 @@ func (c *YSEClient) PostForm(ctx context.Context, api, serviceNO string, bizData
 
 // ParseNotify 解析异步回调通知，返回BizJSON数据
 func (c *YSEClient) ParseNotify(form url.Values) (X, error) {
-	np := NewNotifyParams(form)
+	nf := NewNotifyForm(form)
 
-	if err := np.Verify(c.pubKey); err != nil {
+	if err := nf.Verify(c.pubKey); err != nil {
 		return nil, err
 	}
 
 	var ret X
 
-	if err := json.Unmarshal([]byte(np.BizJSON), &ret); err != nil {
+	if err := json.Unmarshal([]byte(nf.BizJSON), &ret); err != nil {
 		return nil, err
 	}
 
