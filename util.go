@@ -4,8 +4,10 @@ import (
 	"crypto"
 	"crypto/tls"
 	"encoding/base64"
+	"encoding/json"
 	"encoding/pem"
 	"errors"
+	"fmt"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -101,7 +103,19 @@ func (req *CommonReq) FormURLEncode() string {
 }
 
 // NewCommonReq 返回公共请求参数
-func NewCommonReq(mchNO, serviceNO, bizJSON string) *CommonReq {
+func NewCommonReq(mchNO, serviceNO string, bizData X) (*CommonReq, error) {
+	bizJSON := ""
+
+	if len(bizData) != 0 {
+		bizByte, err := json.Marshal(bizData)
+
+		if err != nil {
+			return nil, err
+		}
+
+		bizJSON = string(bizByte)
+	}
+
 	return &CommonReq{
 		ReqID:     uuid.NewString(),
 		MchNO:     mchNO,
@@ -110,7 +124,7 @@ func NewCommonReq(mchNO, serviceNO, bizJSON string) *CommonReq {
 		ServiceNO: serviceNO,
 		SignType:  "RSA",
 		BizJSON:   bizJSON,
-	}
+	}, nil
 }
 
 // CommonResp 公关返回参数
@@ -123,7 +137,7 @@ type CommonResp struct {
 }
 
 // Verify 签名验证
-func (resp *CommonResp) Verify(key *PublicKey) error {
+func (resp *CommonResp) Verify(reqID string, key *PublicKey) error {
 	sign, err := base64.StdEncoding.DecodeString(resp.Sign)
 
 	if err != nil {
@@ -149,7 +163,15 @@ func (resp *CommonResp) Verify(key *PublicKey) error {
 	builder.WriteString("requestId=")
 	builder.WriteString(resp.ReqID)
 
-	return key.Verify(crypto.SHA1, []byte(builder.String()), sign)
+	if err = key.Verify(crypto.SHA1, []byte(builder.String()), sign); err != nil {
+		return err
+	}
+
+	if resp.ReqID != reqID {
+		return fmt.Errorf("requestID mismatch, request: %s, response: %s", reqID, resp.ReqID)
+	}
+
+	return nil
 }
 
 // NotifyParams 异步回调通知参数

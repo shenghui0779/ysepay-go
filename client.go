@@ -67,19 +67,11 @@ func (c *YSEClient) Decrypt(cipher string) (string, error) {
 
 // PostForm 发送POST表单请求
 func (c *YSEClient) PostForm(ctx context.Context, api, serviceNO string, bizData X, options ...HTTPOption) (X, error) {
-	bizJSON := ""
+	commReq, err := NewCommonReq(c.mchNO, serviceNO, bizData)
 
-	if len(bizData) != 0 {
-		bizByte, err := json.Marshal(bizData)
-
-		if err != nil {
-			return nil, err
-		}
-
-		bizJSON = string(bizByte)
+	if err != nil {
+		return nil, err
 	}
-
-	commReq := NewCommonReq(c.mchNO, serviceNO, bizJSON)
 
 	if err := commReq.DoSign(c.prvKey); err != nil {
 		return nil, err
@@ -111,12 +103,8 @@ func (c *YSEClient) PostForm(ctx context.Context, api, serviceNO string, bizData
 		return nil, err
 	}
 
-	if err = commResp.Verify(c.pubKey); err != nil {
+	if err = commResp.Verify(commReq.ReqID, c.pubKey); err != nil {
 		return nil, err
-	}
-
-	if commResp.ReqID != commReq.ReqID {
-		return nil, fmt.Errorf("requestID mismatch, request: %s, response: %s", commReq.ReqID, commResp.ReqID)
 	}
 
 	if commResp.Code != CodeOK {
