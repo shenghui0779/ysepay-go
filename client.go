@@ -21,9 +21,63 @@ type YSEClient struct {
 	client HTTPClient
 }
 
-// SetHTTPClient 设置 HTTP Client
+// SetHTTPClient 设置自定义Client
 func (c *YSEClient) SetHTTPClient(cli *http.Client) {
 	c.client = NewHTTPClient(cli)
+}
+
+// SetPrivateKeyFromPemBlock 通过PEM字节设置RSA私钥
+func (c *YSEClient) SetPrivateKeyFromPemBlock(mode RSAPaddingMode, pemBlock []byte) (err error) {
+	c.prvKey, err = NewPrivateKeyFromPemBlock(mode, pemBlock)
+
+	return
+}
+
+// SetPrivateKeyFromPemFile 通过PEM文件设置RSA私钥
+func (c *YSEClient) SetPrivateKeyFromPemFile(mode RSAPaddingMode, pemFile string) (err error) {
+	c.prvKey, err = NewPrivateKeyFromPemFile(mode, pemFile)
+
+	return
+}
+
+// SetPrivateKeyFromPfxFile 通过pfx(p12)证书设置RSA私钥
+// 注意：证书需采用「TripleDES-SHA1」加密方式
+func (c *YSEClient) SetPrivateKeyFromPfxFile(pfxFile, password string) (err error) {
+	c.prvKey, err = NewPrivateKeyFromPfxFile(pfxFile, password)
+
+	return
+}
+
+// NewPublicKeyFromPemBlock 通过PEM字节设置RSA公钥
+func (c *YSEClient) SetPublicKeyFromPemBlock(mode RSAPaddingMode, pemBlock []byte) (err error) {
+	c.pubKey, err = NewPublicKeyFromPemBlock(mode, pemBlock)
+
+	return
+}
+
+// NewPublicKeyFromPemFile 通过PEM文件设置RSA公钥
+func (c *YSEClient) SetPublicKeyFromPemFile(mode RSAPaddingMode, pemFile string) (err error) {
+	c.pubKey, err = NewPublicKeyFromPemFile(mode, pemFile)
+
+	return
+}
+
+// NewPublicKeyFromDerBlock 通过DER字节设置RSA公钥
+// 注意PEM格式: -----BEGIN CERTIFICATE----- | -----END CERTIFICATE-----
+// DER转换命令: openssl x509 -inform der -in cert.cer -out cert.pem
+func (c *YSEClient) SetPublicKeyFromDerBlock(pemBlock []byte) (err error) {
+	c.pubKey, err = NewPublicKeyFromDerBlock(pemBlock)
+
+	return
+}
+
+// NewPublicKeyFromDerFile 通过DER证书设置RSA公钥
+// 注意PEM格式: -----BEGIN CERTIFICATE----- | -----END CERTIFICATE-----
+// DER转换命令: openssl x509 -inform der -in cert.cer -out cert.pem
+func (c *YSEClient) SetPublicKeyFromDerFile(pemFile string) (err error) {
+	c.pubKey, err = NewPublicKeyFromDerFile(pemFile)
+
+	return
 }
 
 // URL 生成请求URL
@@ -142,13 +196,11 @@ func (c *YSEClient) ParseNotify(form url.Values) (X, error) {
 }
 
 // NewYSEClient 生成银盛支付Client
-func NewYSEClient(mchNO, desKey string, prvKey *PrivateKey, pubKey *PublicKey) *YSEClient {
+func NewYSEClient(mchNO, desKey string) *YSEClient {
 	return &YSEClient{
 		host:   "https://eqt.ysepay.com",
 		mchNO:  mchNO,
 		desECB: NewDesECB([]byte(desKey), DES_PKCS5),
-		prvKey: prvKey,
-		pubKey: pubKey,
 		client: NewDefaultHTTPClient(),
 	}
 }

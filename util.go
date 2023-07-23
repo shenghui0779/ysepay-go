@@ -42,6 +42,10 @@ type CommonReq struct {
 
 // DoSign 生成签名
 func (req *CommonReq) DoSign(key *PrivateKey) error {
+	if key == nil {
+		return errors.New("private key is nil (forgotten configure?)")
+	}
+
 	var builder strings.Builder
 
 	if len(req.BizJSON) != 0 {
@@ -138,6 +142,10 @@ type CommonResp struct {
 
 // Verify 签名验证
 func (resp *CommonResp) Verify(reqID string, key *PublicKey) error {
+	if key == nil {
+		return errors.New("public key is nil (forgotten configure?)")
+	}
+
 	sign, err := base64.StdEncoding.DecodeString(resp.Sign)
 
 	if err != nil {
@@ -187,6 +195,10 @@ type NotifyForm struct {
 
 // Verify 签名验证
 func (nf *NotifyForm) Verify(key *PublicKey) error {
+	if key == nil {
+		return errors.New("public key is nil (forgotten configure?)")
+	}
+
 	sign, err := base64.StdEncoding.DecodeString(nf.Sign)
 
 	if err != nil {
