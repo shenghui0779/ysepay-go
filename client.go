@@ -235,7 +235,7 @@ func (c *YSEClient) reqForm(reqID, serviceNO string, bizData X) (string, error) 
 		return "", err
 	}
 
-	v.Set("sign", string(sign))
+	v.Set("sign", base64.StdEncoding.EncodeToString(sign))
 
 	return v.Encode("=", "&", WithEmptyEncMode(EmptyEncIgnore), WithKVEscape()), nil
 }
@@ -256,7 +256,7 @@ func (c *YSEClient) verifyResp(reqID string, ret gjson.Result) (gjson.Result, er
 	v.Set("requestId", ret.Get("requestId").String())
 	v.Set("code", ret.Get("code").String())
 	v.Set("msg", ret.Get("msg").String())
-	v.Set("bizResponseJson", ret.Get("bizResponseJson").Raw)
+	v.Set("bizResponseJson", ret.Get("bizResponseJson").String())
 
 	err = c.pubKey.Verify(crypto.SHA1, []byte(v.Encode("=", "&", WithEmptyEncMode(EmptyEncIgnore))), sign)
 
