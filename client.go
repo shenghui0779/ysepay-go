@@ -20,7 +20,7 @@ import (
 type YSEClient struct {
 	host   string
 	mchNO  string
-	desECB *DesECB
+	ecb    *DesECB
 	prvKey *PrivateKey
 	pubKey *PublicKey
 	client HTTPClient
@@ -98,7 +98,7 @@ func (c *YSEClient) URL(api string) string {
 
 // Encrypt 敏感数据DES加密
 func (c *YSEClient) Encrypt(plain string) (string, error) {
-	b, err := c.desECB.Encrypt([]byte(plain))
+	b, err := c.ecb.Encrypt([]byte(plain))
 
 	if err != nil {
 		return "", err
@@ -109,7 +109,7 @@ func (c *YSEClient) Encrypt(plain string) (string, error) {
 
 // MustEncrypt 敏感数据DES加密；若发生错误，则返回错误信息
 func (c *YSEClient) MustEncrypt(plain string) string {
-	b, err := c.desECB.Encrypt([]byte(plain))
+	b, err := c.ecb.Encrypt([]byte(plain))
 
 	if err != nil {
 		return err.Error()
@@ -126,7 +126,7 @@ func (c *YSEClient) Decrypt(cipher string) (string, error) {
 		return "", err
 	}
 
-	plain, err := c.desECB.Decrypt(b)
+	plain, err := c.ecb.Decrypt(b)
 
 	if err != nil {
 		return "", err
@@ -284,7 +284,7 @@ func NewYSEClient(mchNO, desKey string) *YSEClient {
 	return &YSEClient{
 		host:   "https://eqt.ysepay.com",
 		mchNO:  mchNO,
-		desECB: NewDesECB([]byte(desKey), DES_PKCS5),
+		ecb:    NewDesECB([]byte(desKey), DES_PKCS5),
 		client: NewDefaultHTTPClient(),
 	}
 }
