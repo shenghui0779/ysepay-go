@@ -2,13 +2,18 @@ package ysepay
 
 import (
 	"context"
+	"crypto"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/google/uuid"
+	"github.com/tidwall/gjson"
 )
 
 // YSEClient 银盛支付Client
@@ -102,6 +107,17 @@ func (c *YSEClient) Encrypt(plain string) (string, error) {
 	return base64.StdEncoding.EncodeToString(b), nil
 }
 
+// MustEncrypt 敏感数据DES加密；若发生错误，则返回错误信息
+func (c *YSEClient) MustEncrypt(plain string) string {
+	b, err := c.desECB.Encrypt([]byte(plain))
+
+	if err != nil {
+		return err.Error()
+	}
+
+	return base64.StdEncoding.EncodeToString(b)
+}
+
 // Decrypt 敏感数据DES解密
 func (c *YSEClient) Decrypt(cipher string) (string, error) {
 	b, err := base64.StdEncoding.DecodeString(cipher)
@@ -120,79 +136,147 @@ func (c *YSEClient) Decrypt(cipher string) (string, error) {
 }
 
 // PostForm 发送POST表单请求
-func (c *YSEClient) PostForm(ctx context.Context, api, serviceNO string, bizData X, options ...HTTPOption) (X, error) {
-	commReq, err := NewCommonReq(c.mchNO, serviceNO, bizData)
+func (c *YSEClient) PostForm(ctx context.Context, api, serviceNO string, bizData X, options ...HTTPOption) (gjson.Result, error) {
+	reqID := uuid.NewString()
+
+	form, err := c.reqForm(reqID, serviceNO, bizData)
 
 	if err != nil {
-		return nil, err
-	}
-
-	if err := commReq.DoSign(c.prvKey); err != nil {
-		return nil, err
+		return fail(err)
 	}
 
 	options = append(options, WithHTTPHeader("Content-Type", "application/x-www-form-urlencoded"))
 
-	resp, err := c.client.Do(ctx, http.MethodPost, c.URL(api), []byte(commReq.FormURLEncode()), options...)
+	resp, err := c.client.Do(ctx, http.MethodPost, c.URL(api), []byte(form), options...)
 
 	if err != nil {
-		return nil, err
+		return fail(err)
 	}
 
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("HTTP Request Error, StatusCode = %d", resp.StatusCode)
+		return fail(fmt.Errorf("HTTP Request Error, StatusCode = %d", resp.StatusCode))
 	}
 
 	b, err := io.ReadAll(resp.Body)
 
 	if err != nil {
-		return nil, err
+		return fail(err)
 	}
 
-	commResp := new(CommonResp)
+	ret, err := c.verifyResp(reqID, gjson.ParseBytes(b))
 
-	if err = json.Unmarshal(b, commResp); err != nil {
-		return nil, err
-	}
-
-	if err = commResp.Verify(commReq.ReqID, c.pubKey); err != nil {
-		return nil, err
-	}
-
-	if commResp.Code != CodeOK {
-		if commResp.Code == CodeAccepting {
-			return nil, ErrAccepting
-		}
-
-		return nil, fmt.Errorf("%s | %s", commResp.Code, commResp.Msg)
-	}
-
-	var ret X
-
-	if err = json.Unmarshal([]byte(commResp.BizJSON), &ret); err != nil {
-		return nil, err
+	if err != nil {
+		return fail(err)
 	}
 
 	return ret, nil
 }
 
-// ParseNotify 解析异步回调通知，返回BizJSON数据
-func (c *YSEClient) ParseNotify(form url.Values) (X, error) {
-	nf := NewNotifyForm(form)
-
-	if err := nf.Verify(c.pubKey); err != nil {
-		return nil, err
+// VerifyNotify 解析并验证异步回调通知，返回BizJSON数据
+func (c *YSEClient) VerifyNotify(form url.Values) (gjson.Result, error) {
+	if c.pubKey == nil {
+		return fail(errors.New("public key is nil (forgotten configure?)"))
 	}
 
-	var ret X
+	sign, err := base64.StdEncoding.DecodeString(form.Get("sign"))
 
-	if err := json.Unmarshal([]byte(nf.BizJSON), &ret); err != nil {
-		return nil, err
+	if err != nil {
+		return fail(err)
 	}
 
-	return ret, nil
+	v := V{}
+
+	v.Set("requestId", form.Get("requestId"))
+	v.Set("version", form.Get("version"))
+	v.Set("charset", form.Get("charset"))
+	v.Set("serviceNo", form.Get("serviceNo"))
+	v.Set("signType", form.Get("signType"))
+	v.Set("bizResponseJson", form.Get("bizResponseJson"))
+
+	err = c.pubKey.Verify(crypto.SHA1, []byte(v.Encode("=", "&", WithEmptyEncMode(EmptyEncIgnore))), sign)
+
+	if err != nil {
+		return fail(err)
+	}
+
+	return gjson.Parse(form.Get("bizResponseJson")), nil
+}
+
+// reqForm 生成请求表单
+func (c *YSEClient) reqForm(reqID, serviceNO string, bizData X) (string, error) {
+	if c.prvKey == nil {
+		return "", errors.New("private key is nil (forgotten configure?)")
+	}
+
+	v := V{}
+
+	v.Set("requestId", reqID)
+	v.Set("srcMerchantNo", c.mchNO)
+	v.Set("version", "v2.0.0")
+	v.Set("charset", "UTF-8")
+	v.Set("serviceNo", serviceNO)
+	v.Set("signType", "RSA")
+
+	if len(bizData) != 0 {
+		bizByte, err := json.Marshal(bizData)
+
+		if err != nil {
+			return "", err
+		}
+
+		v.Set("bizReqJson", string(bizByte))
+	}
+
+	sign, err := c.prvKey.Sign(crypto.SHA1, []byte(v.Encode("=", "&", WithIgnoreKeys("sign"), WithEmptyEncMode(EmptyEncIgnore))))
+
+	if err != nil {
+		return "", err
+	}
+
+	v.Set("sign", string(sign))
+
+	return v.Encode("=", "&", WithEmptyEncMode(EmptyEncIgnore), WithKVEscape()), nil
+}
+
+func (c *YSEClient) verifyResp(reqID string, ret gjson.Result) (gjson.Result, error) {
+	if c.pubKey == nil {
+		return fail(errors.New("public key is nil (forgotten configure?)"))
+	}
+
+	sign, err := base64.StdEncoding.DecodeString(ret.Get("sign").String())
+
+	if err != nil {
+		return fail(err)
+	}
+
+	v := V{}
+
+	v.Set("requestId", ret.Get("requestId").String())
+	v.Set("code", ret.Get("code").String())
+	v.Set("msg", ret.Get("msg").String())
+	v.Set("bizResponseJson", ret.Get("bizResponseJson").Raw)
+
+	err = c.pubKey.Verify(crypto.SHA1, []byte(v.Encode("=", "&", WithEmptyEncMode(EmptyEncIgnore))), sign)
+
+	if err != nil {
+		return fail(err)
+	}
+
+	if id := ret.Get("requestId").String(); id != reqID {
+		return fail(fmt.Errorf("requestID mismatch, request: %s, response: %s", reqID, id))
+	}
+
+	if code := ret.Get("code").String(); code != CodeOK {
+		if code == CodeAccepting {
+			return fail(ErrAccepting)
+		}
+
+		return fail(fmt.Errorf("%s | %s", code, ret.Get("msg").String()))
+	}
+
+	return ret.Get("bizResponseJson"), nil
 }
 
 // NewYSEClient 生成银盛支付Client
