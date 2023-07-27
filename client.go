@@ -88,7 +88,7 @@ func (c *YSEClient) PostForm(ctx context.Context, api, serviceNO string, bizData
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected http status: %d", resp.StatusCode)
+		return nil, fmt.Errorf("HTTP Request Error, StatusCode = %d", resp.StatusCode)
 	}
 
 	b, err := io.ReadAll(resp.Body)
