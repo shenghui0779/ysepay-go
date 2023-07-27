@@ -9,7 +9,7 @@ import (
 
 func TestDesECB(t *testing.T) {
 	key := []byte("DES8Char")
-	plainText := "Iloveyiigo"
+	plainText := "ILoveYiigo"
 
 	// ZERO_PADDING
 	zero := NewDesECB(key, DES_ZERO)
@@ -80,7 +80,7 @@ t6RsET7ZhCU8m8/6gIS5lZRoJt1aoqL3UyfFdWVA8pZwihDnEHvp1+0yl2BBaAN1
 Vv8zI7kt+uZxD5mBGglKs2wzaHqADBXa5kSznIvkcZSg07UQQYU6
 -----END RSA PRIVATE KEY-----`)
 
-	plainText := "IloveGochat"
+	plainText := "ILoveYiigo"
 
 	pvtKey, err := NewPrivateKeyFromPemBlock(RSA_PKCS1, privateKey)
 
