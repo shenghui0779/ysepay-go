@@ -174,36 +174,6 @@ func (c *YSEClient) PostForm(ctx context.Context, api, serviceNO string, bizData
 	return ret, nil
 }
 
-// VerifyNotify 解析并验证异步回调通知，返回BizJSON数据
-func (c *YSEClient) VerifyNotify(form url.Values) (gjson.Result, error) {
-	if c.pubKey == nil {
-		return fail(errors.New("public key is nil (forgotten configure?)"))
-	}
-
-	sign, err := base64.StdEncoding.DecodeString(form.Get("sign"))
-
-	if err != nil {
-		return fail(err)
-	}
-
-	v := V{}
-
-	v.Set("requestId", form.Get("requestId"))
-	v.Set("version", form.Get("version"))
-	v.Set("charset", form.Get("charset"))
-	v.Set("serviceNo", form.Get("serviceNo"))
-	v.Set("signType", form.Get("signType"))
-	v.Set("bizResponseJson", form.Get("bizResponseJson"))
-
-	err = c.pubKey.Verify(crypto.SHA1, []byte(v.Encode("=", "&", WithEmptyEncMode(EmptyEncIgnore))), sign)
-
-	if err != nil {
-		return fail(err)
-	}
-
-	return gjson.Parse(form.Get("bizResponseJson")), nil
-}
-
 // reqForm 生成请求表单
 func (c *YSEClient) reqForm(reqID, serviceNO string, bizData X) (string, error) {
 	if c.prvKey == nil {
@@ -277,6 +247,36 @@ func (c *YSEClient) verifyResp(reqID string, ret gjson.Result) (gjson.Result, er
 	}
 
 	return ret.Get("bizResponseJson"), nil
+}
+
+// VerifyNotify 解析并验证异步回调通知，返回BizJSON数据
+func (c *YSEClient) VerifyNotify(form url.Values) (gjson.Result, error) {
+	if c.pubKey == nil {
+		return fail(errors.New("public key is nil (forgotten configure?)"))
+	}
+
+	sign, err := base64.StdEncoding.DecodeString(form.Get("sign"))
+
+	if err != nil {
+		return fail(err)
+	}
+
+	v := V{}
+
+	v.Set("requestId", form.Get("requestId"))
+	v.Set("version", form.Get("version"))
+	v.Set("charset", form.Get("charset"))
+	v.Set("serviceNo", form.Get("serviceNo"))
+	v.Set("signType", form.Get("signType"))
+	v.Set("bizResponseJson", form.Get("bizResponseJson"))
+
+	err = c.pubKey.Verify(crypto.SHA1, []byte(v.Encode("=", "&", WithEmptyEncMode(EmptyEncIgnore))), sign)
+
+	if err != nil {
+		return fail(err)
+	}
+
+	return gjson.Parse(form.Get("bizResponseJson")), nil
 }
 
 // NewYSEClient 生成银盛支付Client
