@@ -24,7 +24,7 @@ type YSEClient struct {
 	prvKey *PrivateKey
 	pubKey *PublicKey
 	client HTTPClient
-	logger func(ctx context.Context, url, body, resp string)
+	logger func(ctx context.Context, method, url, body, resp string)
 }
 
 // SetHTTPClient 设置自定义Client
@@ -87,7 +87,7 @@ func (c *YSEClient) SetPublicKeyFromDerFile(pemFile string) (err error) {
 }
 
 // WithLogger 设置日志记录
-func (c *YSEClient) WithLogger(f func(ctx context.Context, url, body, resp string)) {
+func (c *YSEClient) WithLogger(f func(ctx context.Context, method, url, body, resp string)) {
 	c.logger = f
 }
 
@@ -143,7 +143,9 @@ func (c *YSEClient) Decrypt(cipher string) (string, error) {
 
 // PostForm 发送POST表单请求
 func (c *YSEClient) PostForm(ctx context.Context, api, serviceNO string, bizData X, options ...HTTPOption) (gjson.Result, error) {
-	log := new(ReqLog)
+	reqURL := c.URL(api)
+
+	log := NewReqLog(http.MethodPost, reqURL)
 	defer log.Do(ctx, c.logger)
 
 	reqID := uuid.NewString()
@@ -155,10 +157,6 @@ func (c *YSEClient) PostForm(ctx context.Context, api, serviceNO string, bizData
 	}
 
 	log.SetBody(form)
-
-	reqURL := c.URL(api)
-
-	log.SetURL(reqURL)
 
 	options = append(options, WithHTTPHeader("Content-Type", "application/x-www-form-urlencoded"))
 
