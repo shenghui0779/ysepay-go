@@ -24,7 +24,7 @@ type YSEClient struct {
 	prvKey *PrivateKey
 	pubKey *PublicKey
 	client HTTPClient
-	logger func(ctx context.Context, method, url, body, resp string)
+	logger func(ctx context.Context, data map[string]string)
 }
 
 // SetHTTPClient 设置自定义Client
@@ -87,7 +87,7 @@ func (c *YSEClient) SetPublicKeyFromDerFile(pemFile string) (err error) {
 }
 
 // WithLogger 设置日志记录
-func (c *YSEClient) WithLogger(f func(ctx context.Context, method, url, body, resp string)) {
+func (c *YSEClient) WithLogger(f func(ctx context.Context, data map[string]string)) {
 	c.logger = f
 }
 
@@ -142,7 +142,7 @@ func (c *YSEClient) Decrypt(cipher string) (string, error) {
 }
 
 // PostForm 发送POST表单请求
-func (c *YSEClient) PostForm(ctx context.Context, api, serviceNO string, bizData X, options ...HTTPOption) (gjson.Result, error) {
+func (c *YSEClient) PostForm(ctx context.Context, api, serviceNO string, bizData V, options ...HTTPOption) (gjson.Result, error) {
 	reqURL := c.URL(api)
 
 	log := NewReqLog(http.MethodPost, reqURL)
@@ -190,7 +190,7 @@ func (c *YSEClient) PostForm(ctx context.Context, api, serviceNO string, bizData
 }
 
 // reqForm 生成请求表单
-func (c *YSEClient) reqForm(reqID, serviceNO string, bizData X) (string, error) {
+func (c *YSEClient) reqForm(reqID, serviceNO string, bizData V) (string, error) {
 	if c.prvKey == nil {
 		return "", errors.New("private key is nil (forgotten configure?)")
 	}

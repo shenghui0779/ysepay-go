@@ -20,12 +20,9 @@ const (
 	SysOK        = "SYS000" // 网关受理成功响应码
 	SysAccepting = "SYS001" // 网关受理中响应码
 
-	ComOK        = "COM000" // 业务受理成功
-	ComAcception = "COM004" // 业务处理中
+	ComOK         = "COM000" // 业务受理成功
+	ComProcessing = "COM004" // 业务处理中
 )
-
-// X 类型别名
-type X map[string]string
 
 // LoadCertFromPfxFile 通过pfx(p12)证书文件生成TLS证书
 // 注意：证书需采用「TripleDES-SHA1」加密方式
