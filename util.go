@@ -13,15 +13,15 @@ import (
 
 var fail = func(err error) (gjson.Result, error) { return gjson.Result{}, err }
 
-// ErrGWAccepting 网关受理中
-var ErrGWAccepting = errors.New("SYS001 | 网关受理中")
+// ErrSysAccepting 网关受理中
+var ErrSysAccepting = errors.New("SYS001 | 网关受理中")
 
 const (
-	GWSuccess   = "SYS000" // 网关受理成功响应码
-	GWAccepting = "SYS001" // 网关受理中响应码
+	SysOK        = "SYS000" // 网关受理成功响应码
+	SysAccepting = "SYS001" // 网关受理中响应码
 
-	TXSuccess   = "COM000" // 业务受理成功
-	TXAcception = "COM004" // 业务处理中
+	ComOK        = "COM000" // 业务受理成功
+	ComAcception = "COM004" // 业务处理中
 )
 
 // X 类型别名
