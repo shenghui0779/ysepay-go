@@ -24,6 +24,7 @@ type YSEClient struct {
 	prvKey *PrivateKey
 	pubKey *PublicKey
 	client HTTPClient
+	logger func(ctx context.Context, url, body, resp string)
 }
 
 // SetHTTPClient 设置自定义Client
@@ -85,6 +86,11 @@ func (c *YSEClient) SetPublicKeyFromDerFile(pemFile string) (err error) {
 	return
 }
 
+// WithLogger 设置日志记录
+func (c *YSEClient) WithLogger(f func(ctx context.Context, url, body, resp string)) {
+	c.logger = f
+}
+
 // URL 生成请求URL
 func (c *YSEClient) URL(api string) string {
 	var builder strings.Builder
@@ -137,6 +143,9 @@ func (c *YSEClient) Decrypt(cipher string) (string, error) {
 
 // PostForm 发送POST表单请求
 func (c *YSEClient) PostForm(ctx context.Context, api, serviceNO string, bizData X, options ...HTTPOption) (gjson.Result, error) {
+	log := new(ReqLog)
+	defer log.Do(ctx, c.logger)
+
 	reqID := uuid.NewString()
 
 	form, err := c.reqForm(reqID, serviceNO, bizData)
@@ -145,9 +154,15 @@ func (c *YSEClient) PostForm(ctx context.Context, api, serviceNO string, bizData
 		return fail(err)
 	}
 
+	log.SetBody(form)
+
+	reqURL := c.URL(api)
+
+	log.SetURL(reqURL)
+
 	options = append(options, WithHTTPHeader("Content-Type", "application/x-www-form-urlencoded"))
 
-	resp, err := c.client.Do(ctx, http.MethodPost, c.URL(api), []byte(form), options...)
+	resp, err := c.client.Do(ctx, http.MethodPost, reqURL, []byte(form), options...)
 
 	if err != nil {
 		return fail(err)
@@ -164,6 +179,8 @@ func (c *YSEClient) PostForm(ctx context.Context, api, serviceNO string, bizData
 	if err != nil {
 		return fail(err)
 	}
+
+	log.SetResp(string(b))
 
 	ret, err := c.verifyResp(reqID, gjson.ParseBytes(b))
 
