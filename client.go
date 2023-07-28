@@ -253,9 +253,9 @@ func (c *YSEClient) verifyResp(reqID string, ret gjson.Result) (gjson.Result, er
 		return fail(fmt.Errorf("requestID mismatch, request: %s, response: %s", reqID, id))
 	}
 
-	if code := ret.Get("code").String(); code != CodeOK {
-		if code == CodeAccepting {
-			return fail(ErrAccepting)
+	if code := ret.Get("code").String(); code != GWSuccess {
+		if code == GWAccepting {
+			return fail(ErrGWAccepting)
 		}
 
 		return fail(fmt.Errorf("%s | %s", code, ret.Get("msg").String()))
