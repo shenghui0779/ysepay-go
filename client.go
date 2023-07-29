@@ -168,6 +168,8 @@ func (c *YSEClient) PostForm(ctx context.Context, api, serviceNO string, bizData
 
 	defer resp.Body.Close()
 
+	log.SetStatusCode(resp.StatusCode)
+
 	if resp.StatusCode != http.StatusOK {
 		return fail(fmt.Errorf("HTTP Request Error, StatusCode = %d", resp.StatusCode))
 	}

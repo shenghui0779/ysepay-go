@@ -1,6 +1,9 @@
 package ysepay
 
-import "context"
+import (
+	"context"
+	"strconv"
+)
 
 // ReqLog 请求日志
 type ReqLog struct {
@@ -20,6 +23,11 @@ func (l *ReqLog) SetBody(v string) {
 // SetResp 设置返回报文
 func (l *ReqLog) SetResp(v string) {
 	l.data["resp"] = v
+}
+
+// SetStatusCode 设置HTTP状态码
+func (l *ReqLog) SetStatusCode(code int) {
+	l.data["status_code"] = strconv.Itoa(code)
 }
 
 // Do 日志记录
