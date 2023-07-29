@@ -16,31 +16,31 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-// YSEClient 银盛支付Client
-type YSEClient struct {
-	host   string
-	mchNO  string
-	ecb    *DesECB
-	prvKey *PrivateKey
-	pubKey *PublicKey
-	client HTTPClient
-	logger func(ctx context.Context, data map[string]string)
+// Client 银盛支付客户端
+type Client struct {
+	host    string
+	mchNO   string
+	ecb     *DesECB
+	prvKey  *PrivateKey
+	pubKey  *PublicKey
+	httpCli HTTPClient
+	logger  func(ctx context.Context, data map[string]string)
 }
 
 // SetHTTPClient 设置自定义Client
-func (c *YSEClient) SetHTTPClient(cli *http.Client) {
-	c.client = NewHTTPClient(cli)
+func (c *Client) SetHTTPClient(cli *http.Client) {
+	c.httpCli = NewHTTPClient(cli)
 }
 
 // SetPrivateKeyFromPemBlock 通过PEM字节设置RSA私钥
-func (c *YSEClient) SetPrivateKeyFromPemBlock(mode RSAPaddingMode, pemBlock []byte) (err error) {
+func (c *Client) SetPrivateKeyFromPemBlock(mode RSAPaddingMode, pemBlock []byte) (err error) {
 	c.prvKey, err = NewPrivateKeyFromPemBlock(mode, pemBlock)
 
 	return
 }
 
 // SetPrivateKeyFromPemFile 通过PEM文件设置RSA私钥
-func (c *YSEClient) SetPrivateKeyFromPemFile(mode RSAPaddingMode, pemFile string) (err error) {
+func (c *Client) SetPrivateKeyFromPemFile(mode RSAPaddingMode, pemFile string) (err error) {
 	c.prvKey, err = NewPrivateKeyFromPemFile(mode, pemFile)
 
 	return
@@ -48,21 +48,21 @@ func (c *YSEClient) SetPrivateKeyFromPemFile(mode RSAPaddingMode, pemFile string
 
 // SetPrivateKeyFromPfxFile 通过pfx(p12)证书设置RSA私钥
 // 注意：证书需采用「TripleDES-SHA1」加密方式
-func (c *YSEClient) SetPrivateKeyFromPfxFile(pfxFile, password string) (err error) {
+func (c *Client) SetPrivateKeyFromPfxFile(pfxFile, password string) (err error) {
 	c.prvKey, err = NewPrivateKeyFromPfxFile(pfxFile, password)
 
 	return
 }
 
 // NewPublicKeyFromPemBlock 通过PEM字节设置RSA公钥
-func (c *YSEClient) SetPublicKeyFromPemBlock(mode RSAPaddingMode, pemBlock []byte) (err error) {
+func (c *Client) SetPublicKeyFromPemBlock(mode RSAPaddingMode, pemBlock []byte) (err error) {
 	c.pubKey, err = NewPublicKeyFromPemBlock(mode, pemBlock)
 
 	return
 }
 
 // NewPublicKeyFromPemFile 通过PEM文件设置RSA公钥
-func (c *YSEClient) SetPublicKeyFromPemFile(mode RSAPaddingMode, pemFile string) (err error) {
+func (c *Client) SetPublicKeyFromPemFile(mode RSAPaddingMode, pemFile string) (err error) {
 	c.pubKey, err = NewPublicKeyFromPemFile(mode, pemFile)
 
 	return
@@ -71,7 +71,7 @@ func (c *YSEClient) SetPublicKeyFromPemFile(mode RSAPaddingMode, pemFile string)
 // NewPublicKeyFromDerBlock 通过DER字节设置RSA公钥
 // 注意PEM格式: -----BEGIN CERTIFICATE----- | -----END CERTIFICATE-----
 // DER转换命令: openssl x509 -inform der -in cert.cer -out cert.pem
-func (c *YSEClient) SetPublicKeyFromDerBlock(pemBlock []byte) (err error) {
+func (c *Client) SetPublicKeyFromDerBlock(pemBlock []byte) (err error) {
 	c.pubKey, err = NewPublicKeyFromDerBlock(pemBlock)
 
 	return
@@ -80,19 +80,19 @@ func (c *YSEClient) SetPublicKeyFromDerBlock(pemBlock []byte) (err error) {
 // NewPublicKeyFromDerFile 通过DER证书设置RSA公钥
 // 注意PEM格式: -----BEGIN CERTIFICATE----- | -----END CERTIFICATE-----
 // DER转换命令: openssl x509 -inform der -in cert.cer -out cert.pem
-func (c *YSEClient) SetPublicKeyFromDerFile(pemFile string) (err error) {
+func (c *Client) SetPublicKeyFromDerFile(pemFile string) (err error) {
 	c.pubKey, err = NewPublicKeyFromDerFile(pemFile)
 
 	return
 }
 
 // WithLogger 设置日志记录
-func (c *YSEClient) WithLogger(f func(ctx context.Context, data map[string]string)) {
+func (c *Client) WithLogger(f func(ctx context.Context, data map[string]string)) {
 	c.logger = f
 }
 
 // URL 生成请求URL
-func (c *YSEClient) URL(api string) string {
+func (c *Client) URL(api string) string {
 	var builder strings.Builder
 
 	builder.WriteString(c.host)
@@ -103,7 +103,7 @@ func (c *YSEClient) URL(api string) string {
 }
 
 // Encrypt 敏感数据DES加密
-func (c *YSEClient) Encrypt(plain string) (string, error) {
+func (c *Client) Encrypt(plain string) (string, error) {
 	b, err := c.ecb.Encrypt([]byte(plain))
 
 	if err != nil {
@@ -114,7 +114,7 @@ func (c *YSEClient) Encrypt(plain string) (string, error) {
 }
 
 // MustEncrypt 敏感数据DES加密；若发生错误，则返回错误信息
-func (c *YSEClient) MustEncrypt(plain string) string {
+func (c *Client) MustEncrypt(plain string) string {
 	b, err := c.ecb.Encrypt([]byte(plain))
 
 	if err != nil {
@@ -125,7 +125,7 @@ func (c *YSEClient) MustEncrypt(plain string) string {
 }
 
 // Decrypt 敏感数据DES解密
-func (c *YSEClient) Decrypt(cipher string) (string, error) {
+func (c *Client) Decrypt(cipher string) (string, error) {
 	b, err := base64.StdEncoding.DecodeString(cipher)
 
 	if err != nil {
@@ -142,7 +142,7 @@ func (c *YSEClient) Decrypt(cipher string) (string, error) {
 }
 
 // PostForm 发送POST表单请求
-func (c *YSEClient) PostForm(ctx context.Context, api, serviceNO string, bizData V, options ...HTTPOption) (gjson.Result, error) {
+func (c *Client) PostForm(ctx context.Context, api, serviceNO string, bizData V, options ...HTTPOption) (gjson.Result, error) {
 	reqURL := c.URL(api)
 
 	log := NewReqLog(http.MethodPost, reqURL)
@@ -160,7 +160,7 @@ func (c *YSEClient) PostForm(ctx context.Context, api, serviceNO string, bizData
 
 	options = append(options, WithHTTPHeader("Content-Type", "application/x-www-form-urlencoded"))
 
-	resp, err := c.client.Do(ctx, http.MethodPost, reqURL, []byte(form), options...)
+	resp, err := c.httpCli.Do(ctx, http.MethodPost, reqURL, []byte(form), options...)
 
 	if err != nil {
 		return fail(err)
@@ -192,7 +192,7 @@ func (c *YSEClient) PostForm(ctx context.Context, api, serviceNO string, bizData
 }
 
 // reqForm 生成请求表单
-func (c *YSEClient) reqForm(reqID, serviceNO string, bizData V) (string, error) {
+func (c *Client) reqForm(reqID, serviceNO string, bizData V) (string, error) {
 	if c.prvKey == nil {
 		return "", errors.New("private key is nil (forgotten configure?)")
 	}
@@ -227,7 +227,7 @@ func (c *YSEClient) reqForm(reqID, serviceNO string, bizData V) (string, error) 
 	return v.Encode("=", "&", WithEmptyEncMode(EmptyEncIgnore), WithKVEscape()), nil
 }
 
-func (c *YSEClient) verifyResp(reqID string, ret gjson.Result) (gjson.Result, error) {
+func (c *Client) verifyResp(reqID string, ret gjson.Result) (gjson.Result, error) {
 	if c.pubKey == nil {
 		return fail(errors.New("public key is nil (forgotten configure?)"))
 	}
@@ -267,7 +267,7 @@ func (c *YSEClient) verifyResp(reqID string, ret gjson.Result) (gjson.Result, er
 }
 
 // VerifyNotify 解析并验证异步回调通知，返回BizJSON数据
-func (c *YSEClient) VerifyNotify(form url.Values) (gjson.Result, error) {
+func (c *Client) VerifyNotify(form url.Values) (gjson.Result, error) {
 	if c.pubKey == nil {
 		return fail(errors.New("public key is nil (forgotten configure?)"))
 	}
@@ -296,12 +296,12 @@ func (c *YSEClient) VerifyNotify(form url.Values) (gjson.Result, error) {
 	return gjson.Parse(form.Get("bizResponseJson")), nil
 }
 
-// NewYSEClient 生成银盛支付Client
-func NewYSEClient(mchNO, desKey string) *YSEClient {
-	return &YSEClient{
-		host:   "https://eqt.ysepay.com",
-		mchNO:  mchNO,
-		ecb:    NewDesECB([]byte(desKey), DES_PKCS5),
-		client: NewDefaultHTTPClient(),
+// NewClient 生成银盛支付Client
+func NewClient(mchNO, desKey string) *Client {
+	return &Client{
+		host:    "https://eqt.ysepay.com",
+		mchNO:   mchNO,
+		ecb:     NewDesECB([]byte(desKey), DES_PKCS5),
+		httpCli: NewDefaultHTTPClient(),
 	}
 }
