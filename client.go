@@ -296,7 +296,7 @@ func (c *Client) VerifyNotify(form url.Values) (gjson.Result, error) {
 	return gjson.Parse(form.Get("bizResponseJson")), nil
 }
 
-// NewClient 生成银盛支付Client
+// NewClient 生成银盛支付客户端
 func NewClient(mchNO, desKey string) *Client {
 	return &Client{
 		host:    "https://eqt.ysepay.com",
