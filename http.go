@@ -10,25 +10,33 @@ import (
 )
 
 type httpSetting struct {
-	headers map[string]string
-	cookies []*http.Cookie
-	close   bool
+	header http.Header
+	cookie []*http.Cookie
+	close  bool
 }
 
 // HTTPOption HTTP请求选项
 type HTTPOption func(s *httpSetting)
 
 // WithHTTPHeader 设置HTTP请求头
-func WithHTTPHeader(key, value string) HTTPOption {
+func WithHTTPHeader(key string, vals ...string) HTTPOption {
 	return func(s *httpSetting) {
-		s.headers[key] = value
+		if len(vals) == 1 {
+			s.header.Set(key, vals[0])
+
+			return
+		}
+
+		for _, v := range vals {
+			s.header.Add(key, v)
+		}
 	}
 }
 
 // WithHTTPCookies 设置HTTP请求Cookie
 func WithHTTPCookies(cookies ...*http.Cookie) HTTPOption {
 	return func(s *httpSetting) {
-		s.cookies = cookies
+		s.cookie = cookies
 	}
 }
 
@@ -60,23 +68,21 @@ func (c *httpclient) Do(ctx context.Context, method, reqURL string, body []byte,
 	setting := new(httpSetting)
 
 	if len(options) != 0 {
-		setting.headers = make(map[string]string)
+		setting.header = http.Header{}
 
 		for _, f := range options {
 			f(setting)
 		}
 	}
 
-	// headers
-	if len(setting.headers) != 0 {
-		for k, v := range setting.headers {
-			req.Header.Set(k, v)
-		}
+	// header
+	if len(setting.header) != 0 {
+		req.Header = setting.header
 	}
 
-	// cookies
-	if len(setting.cookies) != 0 {
-		for _, v := range setting.cookies {
+	// cookie
+	if len(setting.cookie) != 0 {
+		for _, v := range setting.cookie {
 			req.AddCookie(v)
 		}
 	}

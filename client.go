@@ -156,7 +156,7 @@ func (c *Client) PostForm(ctx context.Context, api, serviceNO string, bizData V,
 		return fail(err)
 	}
 
-	log.SetBody(form)
+	log.SetReqBody(form)
 
 	options = append(options, WithHTTPHeader("Content-Type", "application/x-www-form-urlencoded"))
 
@@ -168,6 +168,7 @@ func (c *Client) PostForm(ctx context.Context, api, serviceNO string, bizData V,
 
 	defer resp.Body.Close()
 
+	log.SetRespHeader(resp.Header)
 	log.SetStatusCode(resp.StatusCode)
 
 	if resp.StatusCode != http.StatusOK {
@@ -180,7 +181,7 @@ func (c *Client) PostForm(ctx context.Context, api, serviceNO string, bizData V,
 		return fail(err)
 	}
 
-	log.SetResp(string(b))
+	log.SetRespBody(string(b))
 
 	ret, err := c.verifyResp(gjson.ParseBytes(b))
 
