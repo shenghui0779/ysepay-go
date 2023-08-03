@@ -182,7 +182,7 @@ func (c *Client) PostForm(ctx context.Context, api, serviceNO string, bizData V,
 
 	log.SetResp(string(b))
 
-	ret, err := c.verifyResp(reqID, gjson.ParseBytes(b))
+	ret, err := c.verifyResp(gjson.ParseBytes(b))
 
 	if err != nil {
 		return fail(err)
@@ -227,7 +227,7 @@ func (c *Client) reqForm(reqID, serviceNO string, bizData V) (string, error) {
 	return v.Encode("=", "&", WithEmptyEncMode(EmptyEncIgnore), WithKVEscape()), nil
 }
 
-func (c *Client) verifyResp(reqID string, ret gjson.Result) (gjson.Result, error) {
+func (c *Client) verifyResp(ret gjson.Result) (gjson.Result, error) {
 	if c.pubKey == nil {
 		return fail(errors.New("public key is nil (forgotten configure?)"))
 	}
@@ -249,10 +249,6 @@ func (c *Client) verifyResp(reqID string, ret gjson.Result) (gjson.Result, error
 
 	if err != nil {
 		return fail(err)
-	}
-
-	if id := ret.Get("requestId").String(); id != reqID {
-		return fail(fmt.Errorf("requestID mismatch, request: %s, response: %s", reqID, id))
 	}
 
 	if code := ret.Get("code").String(); code != SysOK {
