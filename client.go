@@ -142,7 +142,7 @@ func (c *Client) Decrypt(cipher string) (string, error) {
 }
 
 // PostForm 发送POST表单请求
-func (c *Client) PostForm(ctx context.Context, api, serviceNO string, bizData V, options ...HTTPOption) (gjson.Result, error) {
+func (c *Client) PostForm(ctx context.Context, api, serviceNO string, bizData V) (gjson.Result, error) {
 	reqURL := c.URL(api)
 
 	log := NewReqLog(http.MethodPost, reqURL)
@@ -158,9 +158,7 @@ func (c *Client) PostForm(ctx context.Context, api, serviceNO string, bizData V,
 
 	log.SetReqBody(form)
 
-	options = append(options, WithHTTPHeader("Content-Type", "application/x-www-form-urlencoded"))
-
-	resp, err := c.httpCli.Do(ctx, http.MethodPost, reqURL, []byte(form), options...)
+	resp, err := c.httpCli.Do(ctx, http.MethodPost, reqURL, []byte(form), WithHTTPHeader("Content-Type", "application/x-www-form-urlencoded"))
 
 	if err != nil {
 		return fail(err)
