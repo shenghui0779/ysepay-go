@@ -32,7 +32,7 @@ func (c *Client) SetHTTPClient(cli *http.Client) {
 	c.httpCli = NewHTTPClient(cli)
 }
 
-// SetPrivateKeyFromPemBlock 通过PEM字节设置RSA私钥
+// SetPrivateKeyFromPemBlock 通过PEM字节设置商户RSA私钥
 func (c *Client) SetPrivateKeyFromPemBlock(mode RSAPaddingMode, pemBlock []byte) error {
 	key, err := NewPrivateKeyFromPemBlock(mode, pemBlock)
 
@@ -45,7 +45,7 @@ func (c *Client) SetPrivateKeyFromPemBlock(mode RSAPaddingMode, pemBlock []byte)
 	return nil
 }
 
-// SetPrivateKeyFromPemFile 通过PEM文件设置RSA私钥
+// SetPrivateKeyFromPemFile 通过PEM文件设置商户RSA私钥
 func (c *Client) SetPrivateKeyFromPemFile(mode RSAPaddingMode, pemFile string) error {
 	key, err := NewPrivateKeyFromPemFile(mode, pemFile)
 
@@ -58,7 +58,7 @@ func (c *Client) SetPrivateKeyFromPemFile(mode RSAPaddingMode, pemFile string) e
 	return nil
 }
 
-// SetPrivateKeyFromPfxFile 通过pfx(p12)证书设置RSA私钥
+// SetPrivateKeyFromPfxFile 通过pfx(p12)证书设置商户RSA私钥
 // 注意：证书需采用「TripleDES-SHA1」加密方式
 func (c *Client) SetPrivateKeyFromPfxFile(pfxFile, password string) error {
 	key, err := NewPrivateKeyFromPfxFile(pfxFile, password)
@@ -72,7 +72,7 @@ func (c *Client) SetPrivateKeyFromPfxFile(pfxFile, password string) error {
 	return nil
 }
 
-// NewPublicKeyFromPemBlock 通过PEM字节设置RSA公钥
+// NewPublicKeyFromPemBlock 通过PEM字节设置平台RSA公钥
 func (c *Client) SetPublicKeyFromPemBlock(mode RSAPaddingMode, pemBlock []byte) error {
 	key, err := NewPublicKeyFromPemBlock(mode, pemBlock)
 
@@ -85,7 +85,7 @@ func (c *Client) SetPublicKeyFromPemBlock(mode RSAPaddingMode, pemBlock []byte) 
 	return nil
 }
 
-// NewPublicKeyFromPemFile 通过PEM文件设置RSA公钥
+// NewPublicKeyFromPemFile 通过PEM文件设置平台RSA公钥
 func (c *Client) SetPublicKeyFromPemFile(mode RSAPaddingMode, pemFile string) error {
 	key, err := NewPublicKeyFromPemFile(mode, pemFile)
 
@@ -98,7 +98,7 @@ func (c *Client) SetPublicKeyFromPemFile(mode RSAPaddingMode, pemFile string) er
 	return nil
 }
 
-// NewPublicKeyFromDerBlock 通过DER字节设置RSA公钥
+// NewPublicKeyFromDerBlock 通过DER字节设置平台RSA公钥
 // 注意PEM格式: -----BEGIN CERTIFICATE----- | -----END CERTIFICATE-----
 // DER转换命令: openssl x509 -inform der -in cert.cer -out cert.pem
 func (c *Client) SetPublicKeyFromDerBlock(pemBlock []byte) error {
@@ -113,7 +113,7 @@ func (c *Client) SetPublicKeyFromDerBlock(pemBlock []byte) error {
 	return nil
 }
 
-// NewPublicKeyFromDerFile 通过DER证书设置RSA公钥
+// NewPublicKeyFromDerFile 通过DER证书设置平台RSA公钥
 // 注意PEM格式: -----BEGIN CERTIFICATE----- | -----END CERTIFICATE-----
 // DER转换命令: openssl x509 -inform der -in cert.cer -out cert.pem
 func (c *Client) SetPublicKeyFromDerFile(pemFile string) error {
