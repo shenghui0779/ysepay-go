@@ -57,10 +57,15 @@ func (c *DesECB) Encrypt(plainText []byte) ([]byte, error) {
 		plainText = PKCS5Padding(plainText, len(c.key))
 	}
 
+	bm := NewECBEncrypter(block)
+
+	if len(plainText)%bm.BlockSize() != 0 {
+		return nil, errors.New("input not full blocks")
+	}
+
 	cipherText := make([]byte, len(plainText))
 
-	blockMode := NewECBEncrypter(block)
-	blockMode.CryptBlocks(cipherText, plainText)
+	bm.CryptBlocks(cipherText, plainText)
 
 	return cipherText, nil
 }
@@ -73,10 +78,15 @@ func (c *DesECB) Decrypt(cipherText []byte) ([]byte, error) {
 		return nil, err
 	}
 
+	bm := NewECBDecrypter(block)
+
+	if len(cipherText)%bm.BlockSize() != 0 {
+		return nil, errors.New("input not full blocks")
+	}
+
 	plainText := make([]byte, len(cipherText))
 
-	blockMode := NewECBDecrypter(block)
-	blockMode.CryptBlocks(plainText, cipherText)
+	bm.CryptBlocks(plainText, cipherText)
 
 	switch c.mode {
 	case DES_ZERO:
