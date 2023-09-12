@@ -56,14 +56,14 @@ func (c *Client) Encrypt(plain string) (string, error) {
 	return base64.StdEncoding.EncodeToString(b), nil
 }
 
-// MustEncrypt 敏感数据DES加密；若发生错误，则返回错误信息
+// MustEncrypt 敏感数据DES加密；若发生错误，则Panic
 func (c *Client) MustEncrypt(plain string) string {
 	ecb := NewDesECB([]byte(c.desKey), DES_PKCS5)
 
 	b, err := ecb.Encrypt([]byte(plain))
 
 	if err != nil {
-		return err.Error()
+		panic(err)
 	}
 
 	return base64.StdEncoding.EncodeToString(b)
