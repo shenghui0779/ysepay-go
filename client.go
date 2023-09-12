@@ -48,7 +48,6 @@ func (c *Client) Encrypt(plain string) (string, error) {
 	ecb := NewDesECB([]byte(c.desKey), DES_PKCS5)
 
 	b, err := ecb.Encrypt([]byte(plain))
-
 	if err != nil {
 		return "", err
 	}
@@ -61,7 +60,6 @@ func (c *Client) MustEncrypt(plain string) string {
 	ecb := NewDesECB([]byte(c.desKey), DES_PKCS5)
 
 	b, err := ecb.Encrypt([]byte(plain))
-
 	if err != nil {
 		panic(err)
 	}
@@ -72,7 +70,6 @@ func (c *Client) MustEncrypt(plain string) string {
 // Decrypt 敏感数据DES解密
 func (c *Client) Decrypt(cipher string) (string, error) {
 	b, err := base64.StdEncoding.DecodeString(cipher)
-
 	if err != nil {
 		return "", err
 	}
@@ -80,7 +77,6 @@ func (c *Client) Decrypt(cipher string) (string, error) {
 	ecb := NewDesECB([]byte(c.desKey), DES_PKCS5)
 
 	plain, err := ecb.Decrypt(b)
-
 	if err != nil {
 		return "", err
 	}
@@ -98,7 +94,6 @@ func (c *Client) PostForm(ctx context.Context, api, serviceNO string, bizData V)
 	reqID := uuid.NewString()
 
 	form, err := c.reqForm(reqID, serviceNO, bizData)
-
 	if err != nil {
 		return fail(err)
 	}
@@ -106,7 +101,6 @@ func (c *Client) PostForm(ctx context.Context, api, serviceNO string, bizData V)
 	log.SetReqBody(form)
 
 	resp, err := c.httpCli.Do(ctx, http.MethodPost, reqURL, []byte(form), WithHTTPHeader("Content-Type", "application/x-www-form-urlencoded"))
-
 	if err != nil {
 		return fail(err)
 	}
@@ -121,15 +115,13 @@ func (c *Client) PostForm(ctx context.Context, api, serviceNO string, bizData V)
 	}
 
 	b, err := io.ReadAll(resp.Body)
-
 	if err != nil {
 		return fail(err)
 	}
 
 	log.SetRespBody(string(b))
 
-	ret, err := c.verifyResp(gjson.ParseBytes(b))
-
+	ret, err := c.verifyResp(b)
 	if err != nil {
 		return fail(err)
 	}
@@ -154,7 +146,6 @@ func (c *Client) reqForm(reqID, serviceNO string, bizData V) (string, error) {
 
 	if len(bizData) != 0 {
 		bizByte, err := json.Marshal(bizData)
-
 		if err != nil {
 			return "", err
 		}
@@ -163,7 +154,6 @@ func (c *Client) reqForm(reqID, serviceNO string, bizData V) (string, error) {
 	}
 
 	sign, err := c.prvKey.Sign(crypto.SHA1, []byte(v.Encode("=", "&", WithIgnoreKeys("sign"), WithEmptyEncMode(EmptyEncIgnore))))
-
 	if err != nil {
 		return "", err
 	}
@@ -173,13 +163,14 @@ func (c *Client) reqForm(reqID, serviceNO string, bizData V) (string, error) {
 	return v.Encode("=", "&", WithEmptyEncMode(EmptyEncIgnore), WithKVEscape()), nil
 }
 
-func (c *Client) verifyResp(ret gjson.Result) (gjson.Result, error) {
+func (c *Client) verifyResp(body []byte) (gjson.Result, error) {
 	if c.pubKey == nil {
 		return fail(errors.New("public key is nil (forgotten configure?)"))
 	}
 
-	sign, err := base64.StdEncoding.DecodeString(ret.Get("sign").String())
+	ret := gjson.ParseBytes(body)
 
+	sign, err := base64.StdEncoding.DecodeString(ret.Get("sign").String())
 	if err != nil {
 		return fail(err)
 	}
@@ -192,7 +183,6 @@ func (c *Client) verifyResp(ret gjson.Result) (gjson.Result, error) {
 	v.Set("bizResponseJson", ret.Get("bizResponseJson").String())
 
 	err = c.pubKey.Verify(crypto.SHA1, []byte(v.Encode("=", "&", WithEmptyEncMode(EmptyEncIgnore))), sign)
-
 	if err != nil {
 		return fail(err)
 	}
@@ -215,7 +205,6 @@ func (c *Client) VerifyNotify(form url.Values) (gjson.Result, error) {
 	}
 
 	sign, err := base64.StdEncoding.DecodeString(form.Get("sign"))
-
 	if err != nil {
 		return fail(err)
 	}
@@ -230,7 +219,6 @@ func (c *Client) VerifyNotify(form url.Values) (gjson.Result, error) {
 	v.Set("bizResponseJson", form.Get("bizResponseJson"))
 
 	err = c.pubKey.Verify(crypto.SHA1, []byte(v.Encode("=", "&", WithEmptyEncMode(EmptyEncIgnore))), sign)
-
 	if err != nil {
 		return fail(err)
 	}

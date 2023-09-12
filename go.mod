@@ -6,7 +6,7 @@ require (
 	github.com/google/uuid v1.3.1
 	github.com/stretchr/testify v1.8.4
 	github.com/tidwall/gjson v1.16.0
-	golang.org/x/crypto v0.12.0
+	golang.org/x/crypto v0.13.0
 )
 
 require (
