@@ -57,13 +57,11 @@ func (c *DesECB) Encrypt(plainText []byte) ([]byte, error) {
 	}
 
 	bm := NewECBEncrypter(block)
-
 	if len(plainText)%bm.BlockSize() != 0 {
 		return nil, errors.New("input not full blocks")
 	}
 
 	cipherText := make([]byte, len(plainText))
-
 	bm.CryptBlocks(cipherText, plainText)
 
 	return cipherText, nil
@@ -77,13 +75,11 @@ func (c *DesECB) Decrypt(cipherText []byte) ([]byte, error) {
 	}
 
 	bm := NewECBDecrypter(block)
-
 	if len(cipherText)%bm.BlockSize() != 0 {
 		return nil, errors.New("input not full blocks")
 	}
 
 	plainText := make([]byte, len(cipherText))
-
 	bm.CryptBlocks(plainText, cipherText)
 
 	switch c.mode {
@@ -136,18 +132,12 @@ func (pk *PrivateKey) Sign(hash crypto.Hash, data []byte) ([]byte, error) {
 	h := hash.New()
 	h.Write(data)
 
-	signature, err := rsa.SignPKCS1v15(rand.Reader, pk.key, hash, h.Sum(nil))
-	if err != nil {
-		return nil, err
-	}
-
-	return signature, nil
+	return rsa.SignPKCS1v15(rand.Reader, pk.key, hash, h.Sum(nil))
 }
 
 // NewPrivateKeyFromPemBlock 通过PEM字节生成RSA私钥
 func NewPrivateKeyFromPemBlock(mode RSAPaddingMode, pemBlock []byte) (*PrivateKey, error) {
 	block, _ := pem.Decode(pemBlock)
-
 	if block == nil {
 		return nil, errors.New("no PEM data is found")
 	}
@@ -231,7 +221,6 @@ func (pk *PublicKey) Verify(hash crypto.Hash, data, signature []byte) error {
 // NewPublicKeyFromPemBlock 通过PEM字节生成RSA公钥
 func NewPublicKeyFromPemBlock(mode RSAPaddingMode, pemBlock []byte) (*PublicKey, error) {
 	block, _ := pem.Decode(pemBlock)
-
 	if block == nil {
 		return nil, errors.New("no PEM data is found")
 	}
@@ -275,7 +264,6 @@ func NewPublicKeyFromPemFile(mode RSAPaddingMode, pemFile string) (*PublicKey, e
 // DER转换命令: openssl x509 -inform der -in cert.cer -out cert.pem
 func NewPublicKeyFromDerBlock(pemBlock []byte) (*PublicKey, error) {
 	block, _ := pem.Decode(pemBlock)
-
 	if block == nil {
 		return nil, errors.New("no PEM data is found")
 	}
@@ -320,7 +308,6 @@ func ZeroUnPadding(plainText []byte) []byte {
 
 func PKCS5Padding(cipherText []byte, blockSize int) []byte {
 	padding := blockSize - len(cipherText)%blockSize
-
 	if padding == 0 {
 		padding = blockSize
 	}

@@ -149,11 +149,9 @@ func FormatVToXML(vals V) ([]byte, error) {
 
 	for k, v := range vals {
 		builder.WriteString("<" + k + ">")
-
 		if err := xml.EscapeText(&builder, []byte(v)); err != nil {
 			return nil, err
 		}
-
 		builder.WriteString("</" + k + ">")
 	}
 

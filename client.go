@@ -104,7 +104,6 @@ func (c *Client) PostForm(ctx context.Context, api, serviceNO string, bizData V)
 	if err != nil {
 		return fail(err)
 	}
-
 	defer resp.Body.Close()
 
 	log.SetRespHeader(resp.Header)
