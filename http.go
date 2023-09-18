@@ -54,11 +54,11 @@ type HTTPClient interface {
 	Do(ctx context.Context, method, reqURL string, body []byte, options ...HTTPOption) (*http.Response, error)
 }
 
-type httpclient struct {
+type httpCli struct {
 	client *http.Client
 }
 
-func (c *httpclient) Do(ctx context.Context, method, reqURL string, body []byte, options ...HTTPOption) (*http.Response, error) {
+func (c *httpCli) Do(ctx context.Context, method, reqURL string, body []byte, options ...HTTPOption) (*http.Response, error) {
 	req, err := http.NewRequestWithContext(ctx, method, reqURL, bytes.NewReader(body))
 	if err != nil {
 		return nil, err
@@ -106,15 +106,15 @@ func (c *httpclient) Do(ctx context.Context, method, reqURL string, body []byte,
 }
 
 // NewHTTPClient 通过官方 `http.Client` 生成一个HTTP客户端
-func NewHTTPClient(client *http.Client) HTTPClient {
-	return &httpclient{
-		client: client,
+func NewHTTPClient(cli *http.Client) HTTPClient {
+	return &httpCli{
+		client: cli,
 	}
 }
 
 // NewDefaultHTTPClient 生成一个默认的HTTP客户端
 func NewDefaultHTTPClient() HTTPClient {
-	return &httpclient{
+	return &httpCli{
 		client: &http.Client{
 			Transport: &http.Transport{
 				Proxy: http.ProxyFromEnvironment,
