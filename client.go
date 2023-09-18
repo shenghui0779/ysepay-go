@@ -228,8 +228,8 @@ func (c *Client) VerifyNotify(form url.Values) (gjson.Result, error) {
 // Option 自定义设置项
 type Option func(c *Client)
 
-// WithClient 设置自定义 HTTP Client
-func WithClient(cli *http.Client) Option {
+// WithHttpCli 设置自定义 HTTP Client
+func WithHttpCli(cli *http.Client) Option {
 	return func(c *Client) {
 		c.httpCli = NewHTTPClient(cli)
 	}
