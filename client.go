@@ -32,8 +32,7 @@ func (c *Client) MchNO() string {
 	return c.mchNO
 }
 
-// URL 生成请求URL
-func (c *Client) URL(api string) string {
+func (c *Client) url(api string) string {
 	var builder strings.Builder
 
 	builder.WriteString(c.host)
@@ -86,14 +85,12 @@ func (c *Client) Decrypt(cipher string) (string, error) {
 
 // PostForm 发送POST表单请求
 func (c *Client) PostForm(ctx context.Context, api, serviceNO string, bizData V) (gjson.Result, error) {
-	reqURL := c.URL(api)
+	reqURL := c.url(api)
 
 	log := NewReqLog(http.MethodPost, reqURL)
 	defer log.Do(ctx, c.logger)
 
-	reqID := uuid.NewString()
-
-	form, err := c.reqForm(reqID, serviceNO, bizData)
+	form, err := c.reqForm(uuid.NewString(), serviceNO, bizData)
 	if err != nil {
 		return fail(err)
 	}
@@ -120,12 +117,7 @@ func (c *Client) PostForm(ctx context.Context, api, serviceNO string, bizData V)
 
 	log.SetRespBody(string(b))
 
-	ret, err := c.verifyResp(b)
-	if err != nil {
-		return fail(err)
-	}
-
-	return ret, nil
+	return c.verifyResp(b)
 }
 
 // reqForm 生成请求表单
