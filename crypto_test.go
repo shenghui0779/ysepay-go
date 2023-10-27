@@ -7,39 +7,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestDesECB(t *testing.T) {
+func TestDesEcbCrypto(t *testing.T) {
 	key := []byte("DES8Char")
 	plainText := "ILoveYiigo"
 
-	// ZERO_PADDING
-	zero := NewDesECB(key, DES_ZERO)
-
-	e0b, err := zero.Encrypt([]byte(plainText))
+	eb, err := DesEcbEncrypt(key, []byte(plainText))
 	assert.Nil(t, err)
 
-	d0b, err := zero.Decrypt(e0b)
+	db, err := DesEcbDecrypt(key, eb)
 	assert.Nil(t, err)
-	assert.Equal(t, plainText, string(d0b))
-
-	// PKCS5_PADDING
-	pkcs5 := NewDesECB(key, DES_PKCS5)
-
-	e5b, err := pkcs5.Encrypt([]byte(plainText))
-	assert.Nil(t, err)
-
-	d5b, err := pkcs5.Decrypt(e5b)
-	assert.Nil(t, err)
-	assert.Equal(t, plainText, string(d5b))
-
-	// PKCS7_PADDING
-	pkcs7 := NewDesECB(key, DES_PKCS7)
-
-	e7b, err := pkcs7.Encrypt([]byte(plainText))
-	assert.Nil(t, err)
-
-	d7b, err := pkcs7.Decrypt(e7b)
-	assert.Nil(t, err)
-	assert.Equal(t, plainText, string(d7b))
+	assert.Equal(t, plainText, string(db))
 }
 
 func TestRSACrypto(t *testing.T) {

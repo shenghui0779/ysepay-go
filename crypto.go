@@ -15,46 +15,24 @@ import (
 	"path/filepath"
 )
 
-// DESPaddingMode DES填充模式
-type DESPaddingMode int
+// RSAPadding RSA PEM 填充模式
+type RSAPadding int
 
 const (
-	DES_ZERO  DESPaddingMode = 0 // 0
-	DES_PKCS5 DESPaddingMode = 5 // PKCS#5
-	DES_PKCS7 DESPaddingMode = 7 // PKCS#7
-)
-
-// RSAPaddingMode RSA PEM 填充模式
-type RSAPaddingMode int
-
-const (
-	RSA_PKCS1 RSAPaddingMode = 1 // PKCS#1 (格式：`RSA PRIVATE KEY` 和 `RSA PUBLIC KEY`)
-	RSA_PKCS8 RSAPaddingMode = 8 // PKCS#8 (格式：`PRIVATE KEY` 和 `PUBLIC KEY`)
+	RSA_PKCS1 RSAPadding = 1 // PKCS#1 (格式：`RSA PRIVATE KEY` 和 `RSA PUBLIC KEY`)
+	RSA_PKCS8 RSAPadding = 8 // PKCS#8 (格式：`PRIVATE KEY` 和 `PUBLIC KEY`)
 )
 
 // ------------------------------------ DES ------------------------------------
 
-// DES-ECB 加密算法
-type DesECB struct {
-	key  []byte
-	mode DESPaddingMode
-}
-
-// Encrypt DES-ECB 加密
-func (c *DesECB) Encrypt(plainText []byte) ([]byte, error) {
-	block, err := des.NewCipher(c.key)
+// DesEcbEncrypt DES-ECB 加密
+func DesEcbEncrypt(key, plainText []byte) ([]byte, error) {
+	block, err := des.NewCipher(key)
 	if err != nil {
 		return nil, err
 	}
 
-	switch c.mode {
-	case DES_ZERO:
-		plainText = ZeroPadding(plainText, block.BlockSize())
-	case DES_PKCS5:
-		plainText = PKCS5Padding(plainText, block.BlockSize())
-	case DES_PKCS7:
-		plainText = PKCS5Padding(plainText, len(c.key))
-	}
+	plainText = PKCS5Padding(plainText, block.BlockSize())
 
 	bm := NewECBEncrypter(block)
 	if len(plainText)%bm.BlockSize() != 0 {
@@ -67,9 +45,9 @@ func (c *DesECB) Encrypt(plainText []byte) ([]byte, error) {
 	return cipherText, nil
 }
 
-// Decrypt DES-ECB 解密
-func (c *DesECB) Decrypt(cipherText []byte) ([]byte, error) {
-	block, err := des.NewCipher(c.key)
+// DesEcbDecrypt DES-ECB 解密
+func DesEcbDecrypt(key, cipherText []byte) ([]byte, error) {
+	block, err := des.NewCipher(key)
 	if err != nil {
 		return nil, err
 	}
@@ -82,24 +60,7 @@ func (c *DesECB) Decrypt(cipherText []byte) ([]byte, error) {
 	plainText := make([]byte, len(cipherText))
 	bm.CryptBlocks(plainText, cipherText)
 
-	switch c.mode {
-	case DES_ZERO:
-		plainText = ZeroUnPadding(plainText)
-	case DES_PKCS5:
-		plainText = PKCS5Unpadding(plainText, block.BlockSize())
-	case DES_PKCS7:
-		plainText = PKCS5Unpadding(plainText, len(c.key))
-	}
-
-	return plainText, nil
-}
-
-// NewDesECB 生成 DES-ECB 加密模式
-func NewDesECB(key []byte, mode DESPaddingMode) *DesECB {
-	return &DesECB{
-		key:  key,
-		mode: mode,
-	}
+	return PKCS5Unpadding(plainText, block.BlockSize()), nil
 }
 
 // ------------------------------------ RSA ------------------------------------
@@ -136,7 +97,7 @@ func (pk *PrivateKey) Sign(hash crypto.Hash, data []byte) ([]byte, error) {
 }
 
 // NewPrivateKeyFromPemBlock 通过PEM字节生成RSA私钥
-func NewPrivateKeyFromPemBlock(mode RSAPaddingMode, pemBlock []byte) (*PrivateKey, error) {
+func NewPrivateKeyFromPemBlock(mode RSAPadding, pemBlock []byte) (*PrivateKey, error) {
 	block, _ := pem.Decode(pemBlock)
 	if block == nil {
 		return nil, errors.New("no PEM data is found")
@@ -162,7 +123,7 @@ func NewPrivateKeyFromPemBlock(mode RSAPaddingMode, pemBlock []byte) (*PrivateKe
 }
 
 // NewPrivateKeyFromPemFile  通过PEM文件生成RSA私钥
-func NewPrivateKeyFromPemFile(mode RSAPaddingMode, pemFile string) (*PrivateKey, error) {
+func NewPrivateKeyFromPemFile(mode RSAPadding, pemFile string) (*PrivateKey, error) {
 	keyPath, err := filepath.Abs(pemFile)
 	if err != nil {
 		return nil, err
@@ -219,7 +180,7 @@ func (pk *PublicKey) Verify(hash crypto.Hash, data, signature []byte) error {
 }
 
 // NewPublicKeyFromPemBlock 通过PEM字节生成RSA公钥
-func NewPublicKeyFromPemBlock(mode RSAPaddingMode, pemBlock []byte) (*PublicKey, error) {
+func NewPublicKeyFromPemBlock(mode RSAPadding, pemBlock []byte) (*PublicKey, error) {
 	block, _ := pem.Decode(pemBlock)
 	if block == nil {
 		return nil, errors.New("no PEM data is found")
@@ -245,7 +206,7 @@ func NewPublicKeyFromPemBlock(mode RSAPaddingMode, pemBlock []byte) (*PublicKey,
 }
 
 // NewPublicKeyFromPemFile 通过PEM文件生成RSA公钥
-func NewPublicKeyFromPemFile(mode RSAPaddingMode, pemFile string) (*PublicKey, error) {
+func NewPublicKeyFromPemFile(mode RSAPadding, pemFile string) (*PublicKey, error) {
 	keyPath, err := filepath.Abs(pemFile)
 	if err != nil {
 		return nil, err
@@ -291,19 +252,6 @@ func NewPublicKeyFromDerFile(pemFile string) (*PublicKey, error) {
 	}
 
 	return NewPublicKeyFromDerBlock(b)
-}
-
-func ZeroPadding(cipherText []byte, blockSize int) []byte {
-	padding := blockSize - len(cipherText)%blockSize
-	padText := bytes.Repeat([]byte{0}, padding)
-
-	return append(cipherText, padText...)
-}
-
-func ZeroUnPadding(plainText []byte) []byte {
-	return bytes.TrimRightFunc(plainText, func(r rune) bool {
-		return r == rune(0)
-	})
 }
 
 func PKCS5Padding(cipherText []byte, blockSize int) []byte {

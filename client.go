@@ -44,9 +44,7 @@ func (c *Client) url(api string) string {
 
 // Encrypt 敏感数据DES加密
 func (c *Client) Encrypt(plain string) (string, error) {
-	ecb := NewDesECB([]byte(c.desKey), DES_PKCS5)
-
-	b, err := ecb.Encrypt([]byte(plain))
+	b, err := DesEcbEncrypt([]byte(c.desKey), []byte(plain))
 	if err != nil {
 		return "", err
 	}
@@ -56,9 +54,7 @@ func (c *Client) Encrypt(plain string) (string, error) {
 
 // MustEncrypt 敏感数据DES加密；若发生错误，则Panic
 func (c *Client) MustEncrypt(plain string) string {
-	ecb := NewDesECB([]byte(c.desKey), DES_PKCS5)
-
-	b, err := ecb.Encrypt([]byte(plain))
+	b, err := DesEcbEncrypt([]byte(c.desKey), []byte(plain))
 	if err != nil {
 		panic(err)
 	}
@@ -73,9 +69,7 @@ func (c *Client) Decrypt(cipher string) (string, error) {
 		return "", err
 	}
 
-	ecb := NewDesECB([]byte(c.desKey), DES_PKCS5)
-
-	plain, err := ecb.Decrypt(b)
+	plain, err := DesEcbDecrypt([]byte(c.desKey), b)
 	if err != nil {
 		return "", err
 	}
