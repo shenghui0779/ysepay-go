@@ -254,6 +254,8 @@ func NewPublicKeyFromDerFile(pemFile string) (*PublicKey, error) {
 	return NewPublicKeyFromDerBlock(b)
 }
 
+// ------------------------------------ DES Padding ------------------------------------
+
 func PKCS5Padding(cipherText []byte, blockSize int) []byte {
 	padding := blockSize - len(cipherText)%blockSize
 	if padding == 0 {
