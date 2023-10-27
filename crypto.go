@@ -256,26 +256,26 @@ func NewPublicKeyFromDerFile(pemFile string) (*PublicKey, error) {
 
 // ------------------------------------ DES Padding ------------------------------------
 
-func PKCS5Padding(cipherText []byte, blockSize int) []byte {
-	padding := blockSize - len(cipherText)%blockSize
+func PKCS5Padding(data []byte, blockSize int) []byte {
+	padding := blockSize - len(data)%blockSize
 	if padding == 0 {
 		padding = blockSize
 	}
 
-	padText := bytes.Repeat([]byte{byte(padding)}, padding)
+	b := bytes.Repeat([]byte{byte(padding)}, padding)
 
-	return append(cipherText, padText...)
+	return append(data, b...)
 }
 
-func PKCS5Unpadding(plainText []byte, blockSize int) []byte {
-	length := len(plainText)
-	unpadding := int(plainText[length-1])
+func PKCS5Unpadding(data []byte, blockSize int) []byte {
+	length := len(data)
+	padding := int(data[length-1])
 
-	if unpadding < 1 || unpadding > blockSize {
-		unpadding = 0
+	if padding < 1 || padding > blockSize {
+		padding = 0
 	}
 
-	return plainText[:(length - unpadding)]
+	return data[:(length - padding)]
 }
 
 // --------------------------------- ECB BlockMode ---------------------------------

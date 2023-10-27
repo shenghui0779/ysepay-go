@@ -11,12 +11,12 @@ func TestDesEcbCrypto(t *testing.T) {
 	key := []byte("DES8Char")
 	plainText := "ILoveYiigo"
 
-	eb, err := DesEcbEncrypt(key, []byte(plainText))
+	cipher, err := DesEcbEncrypt(key, []byte(plainText))
 	assert.Nil(t, err)
 
-	db, err := DesEcbDecrypt(key, eb)
+	plain, err := DesEcbDecrypt(key, cipher)
 	assert.Nil(t, err)
-	assert.Equal(t, plainText, string(db))
+	assert.Equal(t, plainText, string(plain))
 }
 
 func TestRSACrypto(t *testing.T) {
