@@ -1,9 +1,9 @@
 module github.com/shenghui0779/ysepay-go
 
-go 1.18
+go 1.20
 
 require (
-	github.com/google/uuid v1.3.1
+	github.com/google/uuid v1.4.0
 	github.com/stretchr/testify v1.8.4
 	github.com/tidwall/gjson v1.17.0
 	golang.org/x/crypto v0.14.0
