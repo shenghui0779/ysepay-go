@@ -9,14 +9,14 @@ import (
 
 func TestDesEcbCrypto(t *testing.T) {
 	key := []byte("DES8Char")
-	plainText := "ILoveYiigo"
+	data := "ILoveYiigo"
 
-	cipher, err := DesEcbEncrypt(key, []byte(plainText))
+	cipher, err := DesEcbEncrypt(key, []byte(data))
 	assert.Nil(t, err)
 
 	plain, err := DesEcbDecrypt(key, cipher)
 	assert.Nil(t, err)
-	assert.Equal(t, plainText, string(plain))
+	assert.Equal(t, data, string(plain))
 }
 
 func TestRSACrypto(t *testing.T) {

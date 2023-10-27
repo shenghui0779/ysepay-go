@@ -25,7 +25,7 @@ const (
 
 // ------------------------------------ DES ------------------------------------
 
-// DesEcbEncrypt DES-ECB 加密
+// DesEcbEncrypt DES-ECB pkcs#5 加密
 func DesEcbEncrypt(key, plainText []byte) ([]byte, error) {
 	block, err := des.NewCipher(key)
 	if err != nil {
@@ -45,7 +45,7 @@ func DesEcbEncrypt(key, plainText []byte) ([]byte, error) {
 	return cipherText, nil
 }
 
-// DesEcbDecrypt DES-ECB 解密
+// DesEcbDecrypt DES-ECB pkcs#5 解密
 func DesEcbDecrypt(key, cipherText []byte) ([]byte, error) {
 	block, err := des.NewCipher(key)
 	if err != nil {
