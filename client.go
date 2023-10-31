@@ -44,7 +44,7 @@ func (c *Client) url(api string) string {
 
 // Encrypt 敏感数据DES加密
 func (c *Client) Encrypt(plain string) (string, error) {
-	b, err := DesEcbEncrypt([]byte(c.desKey), []byte(plain))
+	b, err := DESEncryptECB([]byte(c.desKey), []byte(plain))
 	if err != nil {
 		return "", err
 	}
@@ -54,7 +54,7 @@ func (c *Client) Encrypt(plain string) (string, error) {
 
 // MustEncrypt 敏感数据DES加密；若发生错误，则Panic
 func (c *Client) MustEncrypt(plain string) string {
-	b, err := DesEcbEncrypt([]byte(c.desKey), []byte(plain))
+	b, err := DESEncryptECB([]byte(c.desKey), []byte(plain))
 	if err != nil {
 		panic(err)
 	}
@@ -69,7 +69,7 @@ func (c *Client) Decrypt(cipher string) (string, error) {
 		return "", err
 	}
 
-	plain, err := DesEcbDecrypt([]byte(c.desKey), b)
+	plain, err := DESEncryptECB([]byte(c.desKey), b)
 	if err != nil {
 		return "", err
 	}

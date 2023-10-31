@@ -25,42 +25,42 @@ const (
 
 // ------------------------------------ DES ------------------------------------
 
-// DesEcbEncrypt DES-ECB pkcs#5 加密
-func DesEcbEncrypt(key, plainText []byte) ([]byte, error) {
+// DESEncryptECB DES-ECB 加密
+func DESEncryptECB(key, data []byte) ([]byte, error) {
 	block, err := des.NewCipher(key)
 	if err != nil {
 		return nil, err
 	}
 
-	plainText = PKCS5Padding(plainText, block.BlockSize())
+	data = pkcs7padding(data, block.BlockSize())
 
 	bm := NewECBEncrypter(block)
-	if len(plainText)%bm.BlockSize() != 0 {
+	if len(data)%bm.BlockSize() != 0 {
 		return nil, errors.New("input not full blocks")
 	}
 
-	cipherText := make([]byte, len(plainText))
-	bm.CryptBlocks(cipherText, plainText)
+	out := make([]byte, len(data))
+	bm.CryptBlocks(out, data)
 
-	return cipherText, nil
+	return out, nil
 }
 
-// DesEcbDecrypt DES-ECB pkcs#5 解密
-func DesEcbDecrypt(key, cipherText []byte) ([]byte, error) {
+// DESDecryptECB DES-ECB 解密
+func DESDecryptECB(key, data []byte) ([]byte, error) {
 	block, err := des.NewCipher(key)
 	if err != nil {
 		return nil, err
 	}
 
 	bm := NewECBDecrypter(block)
-	if len(cipherText)%bm.BlockSize() != 0 {
+	if len(data)%bm.BlockSize() != 0 {
 		return nil, errors.New("input not full blocks")
 	}
 
-	plainText := make([]byte, len(cipherText))
-	bm.CryptBlocks(plainText, cipherText)
+	out := make([]byte, len(data))
+	bm.CryptBlocks(out, data)
 
-	return PKCS5Unpadding(plainText, block.BlockSize()), nil
+	return pkcs7unpadding(out), nil
 }
 
 // ------------------------------------ RSA ------------------------------------
@@ -71,17 +71,17 @@ type PrivateKey struct {
 }
 
 // Decrypt RSA私钥 PKCS#1 v1.5 解密
-func (pk *PrivateKey) Decrypt(cipherText []byte) ([]byte, error) {
-	return rsa.DecryptPKCS1v15(rand.Reader, pk.key, cipherText)
+func (pk *PrivateKey) Decrypt(data []byte) ([]byte, error) {
+	return rsa.DecryptPKCS1v15(rand.Reader, pk.key, data)
 }
 
 // DecryptOAEP RSA私钥 PKCS#1 OAEP 解密
-func (pk *PrivateKey) DecryptOAEP(hash crypto.Hash, cipherText []byte) ([]byte, error) {
+func (pk *PrivateKey) DecryptOAEP(hash crypto.Hash, data []byte) ([]byte, error) {
 	if !hash.Available() {
 		return nil, fmt.Errorf("crypto: requested hash function (%s) is unavailable", hash.String())
 	}
 
-	return rsa.DecryptOAEP(hash.New(), rand.Reader, pk.key, cipherText, nil)
+	return rsa.DecryptOAEP(hash.New(), rand.Reader, pk.key, data, nil)
 }
 
 // Sign RSA私钥签名
@@ -256,7 +256,7 @@ func NewPublicKeyFromDerFile(pemFile string) (*PublicKey, error) {
 
 // ------------------------------------ DES Padding ------------------------------------
 
-func PKCS5Padding(data []byte, blockSize int) []byte {
+func pkcs7padding(data []byte, blockSize int) []byte {
 	padding := blockSize - len(data)%blockSize
 	if padding == 0 {
 		padding = blockSize
@@ -267,13 +267,9 @@ func PKCS5Padding(data []byte, blockSize int) []byte {
 	return append(data, b...)
 }
 
-func PKCS5Unpadding(data []byte, blockSize int) []byte {
+func pkcs7unpadding(data []byte) []byte {
 	length := len(data)
 	padding := int(data[length-1])
-
-	if padding < 1 || padding > blockSize {
-		padding = 0
-	}
 
 	return data[:(length - padding)]
 }
