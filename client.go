@@ -138,14 +138,14 @@ func (c *Client) reqForm(reqID, serviceNO string, bizData V) (string, error) {
 		v.Set("bizReqJson", string(bizByte))
 	}
 
-	sign, err := c.prvKey.Sign(crypto.SHA1, []byte(v.Encode("=", "&", WithIgnoreKeys("sign"), WithEmptyEncMode(EmptyEncIgnore))))
+	sign, err := c.prvKey.Sign(crypto.SHA1, []byte(v.Encode("=", "&", WithIgnoreKeys("sign"), WithEmptyMode(EmptyIgnore))))
 	if err != nil {
 		return "", err
 	}
 
 	v.Set("sign", base64.StdEncoding.EncodeToString(sign))
 
-	return v.Encode("=", "&", WithEmptyEncMode(EmptyEncIgnore), WithKVEscape()), nil
+	return v.Encode("=", "&", WithEmptyMode(EmptyIgnore), WithKVEscape()), nil
 }
 
 func (c *Client) verifyResp(body []byte) (gjson.Result, error) {
@@ -167,7 +167,7 @@ func (c *Client) verifyResp(body []byte) (gjson.Result, error) {
 	v.Set("msg", ret.Get("msg").String())
 	v.Set("bizResponseJson", ret.Get("bizResponseJson").String())
 
-	err = c.pubKey.Verify(crypto.SHA1, []byte(v.Encode("=", "&", WithEmptyEncMode(EmptyEncIgnore))), sign)
+	err = c.pubKey.Verify(crypto.SHA1, []byte(v.Encode("=", "&", WithEmptyMode(EmptyIgnore))), sign)
 	if err != nil {
 		return fail(err)
 	}
@@ -203,7 +203,7 @@ func (c *Client) VerifyNotify(form url.Values) (gjson.Result, error) {
 	v.Set("signType", form.Get("signType"))
 	v.Set("bizResponseJson", form.Get("bizResponseJson"))
 
-	err = c.pubKey.Verify(crypto.SHA1, []byte(v.Encode("=", "&", WithEmptyEncMode(EmptyEncIgnore))), sign)
+	err = c.pubKey.Verify(crypto.SHA1, []byte(v.Encode("=", "&", WithEmptyMode(EmptyIgnore))), sign)
 	if err != nil {
 		return fail(err)
 	}
